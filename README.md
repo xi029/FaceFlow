@@ -1,4 +1,4 @@
-# 🎓 Academic Verdict Simulator | 论文评审互动模拟器
+# 🎓 Academic Verdict Simulator | 滑动变脸动画
 
 ![image](https://github.com/xi029/FaceFlow/blob/main/ass/avs.gif) <!-- 请替换为实际演示GIF路径 -->
 
