@@ -1,6 +1,6 @@
 # 🎓 Academic Verdict Simulator | 论文评审互动模拟器
 
-![image](ass\avs.gif) <!-- 请替换为实际演示GIF路径 -->
+![image](https://github.com/xi029/FaceFlow/blob/main/ass/avs.gif) <!-- 请替换为实际演示GIF路径 -->
 
 一个融合贝塞尔曲线追踪与粒子动画的交互式论文评审模拟器，生动再现学术论文被接受/拒绝的戏剧性时刻！✨
 
