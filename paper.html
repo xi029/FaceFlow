@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Paper Decision</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
+        font-family: "Helvetica Neue", sans-serif;
+      }
+
+      .decision-container {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 50px 80px;
+        border-radius: 20px;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        width: 600px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      h2 {
+        font-size: 32px;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+      }
+
+      .subtitle {
+        font-size: 18px;
+        color: #7f8c8d;
+        margin-bottom: 40px;
+        font-weight: 300;
+      }
+
+      .emoji-track {
+        width: 140px;
+        height: 140px;
+        margin: 30px auto;
+        position: relative;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      }
+
+      #emoji {
+        width: 100%;
+        height: 100%;
+        background: url(1.png) no-repeat center/contain;
+        transition: background-image 0.05s;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 40px;
+        margin-top: 40px;
+        justify-content: center;
+      }
+
+      .btn {
+        padding: 18px 48px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 18px;
+        transition: all 0.3s;
+        min-width: 160px;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .accept-btn {
+        background: #2ecc71;
+        color: white;
+        box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+      }
+
+      .reject-btn {
+        background: #e74c3c;
+        color: white;
+        box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      }
+
+      .confetti {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: #f1c40f;
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .result-message {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 48px;
+        font-weight: bold;
+        color: #2ecc71;
+        opacity: 0;
+        pointer-events: none;
+        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        animation: popIn 0.6s ease-out forwards;
+      }
+
+      @keyframes popIn {
+        0% {
+          transform: translate(-50%, -50%) scale(0);
+          opacity: 0;
+        }
+        70% {
+          transform: translate(-50%, -50%) scale(1.2);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="decision-container">
+      <h2>Paper Decision</h2>
+      <p class="subtitle">AC的最终裁决</p>
+      <div class="emoji-track">
+        <div id="emoji"></div>
+      </div>
+      <div class="button-group">
+        <button class="btn accept-btn" id="acceptBtn">Accept</button>
+        <button class="btn reject-btn" id="rejectBtn">Reject</button>
+      </div>
+    </div>
+
+    <script>
+      const emoji = document.getElementById("emoji");
+      const acceptBtn = document.getElementById("acceptBtn");
+      const rejectBtn = document.getElementById("rejectBtn");
+      const container = document.querySelector(".decision-container");
+
+      // 贝塞尔曲线优化
+      const containerRect = container.getBoundingClientRect();
+      const startBtnRect = rejectBtn.getBoundingClientRect();
+      const endBtnRect = acceptBtn.getBoundingClientRect();
+
+      const controlPoint = {
+        x: (startBtnRect.left + endBtnRect.left) / 2 - containerRect.left,
+        y: (startBtnRect.top + endBtnRect.top) / 2 - containerRect.top - 150,
+      };
+
+      // 预计算路径点提升性能
+      const pathPoints = [];
+      for (let t = 0; t <= 1; t += 0.01) {
+        pathPoints.push({
+          x: quadraticBezier(
+            t,
+            startBtnRect.left - containerRect.left,
+            controlPoint.x,
+            endBtnRect.left - containerRect.left
+          ),
+          y: quadraticBezier(
+            t,
+            startBtnRect.top - containerRect.top,
+            controlPoint.y,
+            endBtnRect.top - containerRect.top
+          ),
+        });
+      }
+
+      function quadraticBezier(t, p0, p1, p2) {
+        return (1 - t) * (1 - t) * p0 + 2 * (1 - t) * t * p1 + t * t * p2;
+      }
+
+      function calculatePosition(e) {
+        const mouseX = e.clientX - containerRect.left;
+        const mouseY = e.clientY - containerRect.top;
+
+        let minDistance = Infinity;
+        let bestT = 0;
+
+        pathPoints.forEach((point, index) => {
+          const distance = Math.sqrt(
+            (mouseX - point.x) ** 2 + (mouseY - point.y) ** 2
+          );
+          if (distance < minDistance) {
+            minDistance = distance;
+            bestT = index / 100;
+          }
+        });
+
+        return Math.max(0, Math.min(1, bestT));
+      }
+
+      function updateEmoji(t) {
+        const frame = Math.ceil(t * 12) + 1;
+        emoji.style.backgroundImage = `url(${frame}.png)`;
+      }
+
+      // 添加粒子特效
+      function createConfetti() {
+        for (let i = 0; i < 50; i++) {
+          const confetti = document.createElement("div");
+          confetti.className = "confetti";
+          confetti.style.left = Math.random() * 100 + "%";
+          confetti.style.animation = `confettiFall ${
+            Math.random() * 3 + 2
+          }s linear`;
+          confetti.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`;
+          container.appendChild(confetti);
+
+          setTimeout(() => confetti.remove(), 3000);
+        }
+      }
+
+      // 结果提示
+      function showResult(message, color) {
+        const msg = document.createElement("div");
+        msg.className = "result-message";
+        msg.textContent = message;
+        msg.style.color = color;
+        container.appendChild(msg);
+
+        setTimeout(() => msg.remove(), 2000);
+      }
+
+      // 事件监听
+      document.addEventListener("mousemove", (e) => {
+        const t = calculatePosition(e);
+        updateEmoji(t);
+      });
+
+      acceptBtn.addEventListener("click", () => {
+        createConfetti();
+        showResult("ACCEPTED!", "#2ecc71");
+        // 添加心跳动画
+        emoji.style.animation = "heartbeat 0.6s ease";
+        setTimeout(() => (emoji.style.animation = ""), 600);
+      });
+
+      rejectBtn.addEventListener("click", () => {
+        showResult("REJECTED", "#e74c3c");
+        // 添加抖动动画
+        container.style.animation = "shake 0.4s ease";
+        setTimeout(() => (container.style.animation = ""), 400);
+      });
+
+      // 动画关键帧
+      const style = document.createElement("style");
+      style.textContent = `
+            @keyframes confettiFall {
+                0% { transform: translateY(-100px) rotate(0deg); }
+                100% { transform: translateY(100vh) rotate(720deg); }
+            }
+            @keyframes heartbeat {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.2); }
+            }
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-10px); }
+                75% { transform: translateX(10px); }
+            }
+        `;
+      document.head.appendChild(style);
+    </script>
+  </body>
+</html>
